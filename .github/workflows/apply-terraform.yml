@@ -11,6 +11,9 @@ on:
       action:
           description: 'Action to perform (create/delete)'
           required: true
+      versioning:
+          description: 'Bucket versioning'
+          required: false
 permissions:
   id-token: write
   contents: read
