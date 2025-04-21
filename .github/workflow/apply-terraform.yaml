@@ -1,0 +1,77 @@
+name: apply-terraform.yaml
+on:
+  workflow_dispatch:
+    inputs:
+      bucket_name:
+          description: 'Buckect Name'
+          required: true
+      region:
+          description: 'AWS Region for the bucket'
+          required: true
+      action:
+          description: 'Action to perform (create/delete)'
+          required: true
+permissions:
+  id-token: write
+  contents: read
+jobs: 
+  terraform_apply:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.action == 'create' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Assume AWS Role using OIDC
+      uses: aws-actions/configure-aws-credentials@v1.7.0
+      
+      with:
+        role-to-assume: arn:aws:iam::730335384723:role/Backstage.io
+        role-session-name: GitHub_to_AWS_via_FederatedOIDC
+        aws-region: ${{ github.event.inputs.region }}
+        
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      
+    - name: Terraform Init
+      run: terraform init
+      
+    - name: Terraform Format
+      run: terraform fmt
+      
+    - name: Terraform Validate
+      run: terraform validate
+      
+    - name: Terraform Apply
+      run: terraform apply -var bucket_name=${{ github.event.inputs.bucket_name }} -var region=${{ github.event.inputs.region }} -auto-approve
+      
+  terraform_destroy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.action == 'delete' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Assume AWS Role using OIDC
+      uses: aws-actions/configure-aws-credentials@v1.7.0
+      
+      with:
+        role-to-assume: arn:aws:iam::730335384723:role/Backstage.io
+        role-session-name: GitHub_to_AWS_via_FederatedOIDC
+        aws-region: ${{ github.event.inputs.region }}
+        
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      
+    - name: Terraform Init
+      run: terraform init
+      
+    - name: Importing Bucket
+      run: terraform import aws_s3_bucket.my_bucket ${{ github.event.inputs.bucket_name }}
+
+    - name: Terraform Destroy
+      run: terraform destroy -var bucket_name=${{ github.event.inputs.bucket_name }} -var region=${{ github.event.inputs.region }} -auto-approve
+
+ 
