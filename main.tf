@@ -6,6 +6,15 @@ terraform {
     }
   }
 }
+
+terraform {
+  backend "s3" {
+    bucket = "interns-backstage.io-statefile"
+    key    = "project/terraform.tfstate"
+    region = "ap-south-1"
+    encrypt = true
+  }
+}
  
 resource "aws_s3_bucket" "my_bucket" {
   bucket = var.bucket_name
